@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bespoke Salary & Budget Statement</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- DESIGN SYSTEM TOKENS --- */
+        :root {
+            --navy-deep: #0A192F;
+            --navy-muted: #172A45;
+            --gold-soft: #C5A880;
+            --gold-light: #F4EFEA;
+            --white-card: #FFFFFF;
+            --bg-global: #F8F9FA;
+            --text-main: #2D3748;
+            --text-muted: #718096;
+            --emerald-safe: #2F855A;
+            --border-color: #E2E8F0;
+            --font-editorial: 'Playfair Display', Georgia, serif;
+            --font-ui: 'Inter', sans-serif;
+            --shadow-premium: 0 20px 40px rgba(10, 25, 47, 0.04);
+            --transition-smooth: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        /* --- BASE RESET & LAYOUT --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-global);
+            color: var(--text-main);
+            font-family: var(--font-ui);
+            line-height: 1.6;
+            padding: 3rem 2rem;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* --- HEADER BRANDING --- */
+        header {
+            text-align: center;
+            margin-bottom: 3.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 2rem;
+        }
+
+        header h1 {
+            font-family: var(--font-editorial);
+            font-size: 2.8rem;
+            color: var(--navy-deep);
+            font-weight: 400;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-family: var(--font-editorial);
+            font-style: italic;
+            color: var(--gold-soft);
+            font-size: 1.1rem;
+            letter-spacing: 0.05em;
+        }
+
+        /* --- TWO-COLUMN WORKSPACE GRID (DESKTOP) --- */
+        .workspace-grid {
+            display: grid;
+            grid-template-columns: 1.14fr 1fr;
+            gap: 2.5rem;
+            align-items: stretch;
+        }
+
+        /* --- CARDS & PANELS --- */
+        .panel {
+            background: var(--white-card);
+            border-radius: 12px;
+            padding: 2.5rem;
+            box-shadow: var(--shadow-premium);
+            border: 1px solid rgba(197, 168, 128, 0.2);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-title {
+            font-family: var(--font-editorial);
+            font-size: 1.5rem;
+            color: var(--navy-deep);
+            margin-bottom: 1.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        /* --- FORM CONTROLS & UI ELEMENTS --- */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--navy-deep);
+            margin-bottom: 0.5rem;
+        }
+
+        .radio-tile-group {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .radio-tile-group label {
+            position: relative;
+        }
+
+        .radio-tile-group input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .radio-tile-label {
+            display: block;
+            text-align: center;
+            padding: 0.75rem;
+            background: var(--bg-global);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--navy-deep);
+            transition: var(--transition-smooth);
+        }
+
+        .radio-tile-group input[type="radio"]:checked + .radio-tile-label {
+            background: var(--navy-deep);
+            color: var(--white-card);
+            border-color: var(--navy-deep);
+        }
+
+        .input-with-prefix {
+            display: flex;
+            align-items: center;
+            background-color: var(--bg-global);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            transition: var(--transition-smooth);
+            width: 100%;
+        }
+
+        .input-with-prefix span {
+            padding-left: 1rem;
+            padding-right: 0.25rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            user-select: none;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 0.85rem 1rem;
+            border: none;
+            background: transparent;
+            font-family: var(--font-ui);
+            font-size: 1rem;
+            color: var(--navy-deep);
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        select, 
+        #taxCodeInput {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: var(--bg-global);
+        }
+
+        .input-with-prefix input {
+            padding-left: 0.25rem;
+        }
+
+        .input-with-prefix:focus-within {
+            border-color: var(--gold-soft);
+            background-color: var(--white-card);
+            box-shadow: 0 0 0 3px rgba(197, 168, 128, 0.15);
+        }
+
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--gold-soft);
+            background-color: var(--white-card);
+            box-shadow: 0 0 0 3px rgba(197, 168, 128, 0.15);
+        }
+
+        select {
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%230A192F' d='M0 0l5 5 5-5z'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            padding-right: 2.5rem;
+            cursor: pointer;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            accent-color: var(--gold-soft);
+            cursor: pointer;
+        }
+
+        .slider-value {
+            font-weight: 600;
+            min-width: 3rem;
+            text-align: right;
+            color: var(--navy-deep);
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            background: var(--bg-global);
+            padding: 1rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .checkbox-item input {
+            accent-color: var(--navy-deep);
+            cursor: pointer;
+        }
+
+        .lock-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .outgoings-list {
+            margin-bottom: 1rem;
+            max-height: 280px;
+            overflow-y: auto;
+            padding-right: 0.25rem;
+        }
+
+        .outgoing-row {
+            display: grid;
+            grid-template-columns: minmax(100px, 1.5fr) minmax(80px, 1fr) minmax(90px, 1fr) auto;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .outgoing-row input.out-name {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: var(--bg-global);
+            padding: 0.85rem 1rem;
+        }
+        .outgoing-row input.out-name:focus {
+            outline: none;
+            border-color: var(--gold-soft);
+            background-color: var(--white-card);
+        }
+
+        .btn-delete {
+            background: transparent;
+            border: none;
+            color: #E53E3E;
+            font-size: 1.4rem;
+            cursor: pointer;
+            padding: 0 0.5rem;
+            transition: var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-delete:hover {
+            transform: scale(1.15);
+        }
+
+        .btn-add {
+            background: transparent;
+            border: 1px dashed var(--gold-soft);
+            color: var(--navy-deep);
+            padding: 0.6rem;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 500;
+            font-size: 0.85rem;
+            transition: var(--transition-smooth);
+        }
+
+        .btn-add:hover {
+            background: var(--gold-light);
+            border-style: solid;
+        }
+
+        /* --- OUTPUT SECTION / TABS --- */
+        .tabs-nav {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            background: var(--bg-global);
+            padding: 0.35rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 0.6rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 6px;
+            transition: var(--transition-smooth);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tab-btn.active {
+            background: var(--white-card);
+            color: var(--navy-deep);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        /* --- STATEMENT LEDGER --- */
+        .ledger {
+            margin-bottom: 1.5rem;
+            flex-grow: 1;
+        }
+
+        .ledger-group {
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .ledger-summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.9rem 0.5rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            list-style: none;
+            user-select: none;
+            transition: var(--transition-smooth);
+            border-radius: 6px;
+            gap: 0.5rem;
+        }
+
+        .ledger-summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .ledger-summary:hover {
+            background: var(--gold-light);
+            color: var(--navy-deep);
+        }
+
+        .summary-left {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .summary-arrow {
+            width: 8px;
+            height: 8px;
+            border-right: 2px solid var(--gold-soft);
+            border-bottom: 2px solid var(--gold-soft);
+            transform: rotate(-45deg);
+            transition: transform 0.2s ease;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        details[open] .summary-arrow {
+            transform: rotate(45deg);
+        }
+
+        .ledger-content {
+            padding: 0.25rem 0 0.75rem 0;
+            animation: fadeIn 0.25s ease-out;
+        }
+
+        .ledger-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 1rem 0.5rem 1.75rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            gap: 0.5rem;
+        }
+
+        .ledger-row.highlighted-deduction {
+            color: #C53030;
+        }
+
+        .ledger-row.highlighted-outgoing {
+            color: #B7791F;
+        }
+
+        .ledger-row.net-income-row {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--navy-deep);
+            background: rgba(244, 239, 234, 0.4);
+            border-top: 1px dashed var(--gold-soft);
+            border-bottom: 1px dashed var(--gold-soft);
+            padding: 0.75rem 0.5rem;
+            margin: 0.5rem 0;
+        }
+
+        .ledger-row.total-row {
+            border-bottom: 2px double var(--navy-deep);
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--white-card);
+            background: var(--emerald-safe);
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 6px;
+        }
+
+        .ledger-val {
+            font-variant-numeric: tabular-nums;
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+
+        .summary-total-val {
+            font-variant-numeric: tabular-nums;
+            font-weight: 600;
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+
+        /* --- CHART STYLING --- */
+        .chart-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 1rem 0;
+            position: relative;
+        }
+
+        .donut-svg {
+            display: block;
+        }
+
+        .donut-segment {
+            fill: none;
+            stroke-width: 24;
+            transition: stroke-dasharray 0.3s ease, stroke 0.3s ease;
+        }
+
+        .deficit-alert-banner {
+            grid-column: span 2;
+            background: #FFF5F5;
+            border: 1px solid #FEB2B2;
+            color: #C53030;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-align: center;
+            padding: 0.6rem;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .chart-legend-container {
+            max-height: 150px;
+            overflow-y: auto;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .chart-legend {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-main);
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        /* --- ACTIONS & PRINT --- */
+        .actions-block {
+            margin-top: 1.5rem;
+        }
+
+        .btn-export {
+            width: 100%;
+            background: var(--navy-deep);
+            color: var(--white-card);
+            border: 1px solid var(--navy-deep);
+            padding: 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            text-transform: uppercase;
+        }
+
+        .btn-export:hover {
+            background: transparent;
+            color: var(--navy-deep);
+            border-color: var(--navy-deep);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- MOBILE RESPONSIVENESS --- */
+        @media (max-width: 992px) {
+            body { padding: 1rem 0.5rem; }
+            header { margin-bottom: 2rem; padding-bottom: 1rem; }
+            header h1 { font-size: 1.8rem; }
+            .workspace-grid { display: flex; flex-direction: column; gap: 1.25rem; }
+            .panel { padding: 1.25rem 1rem; }
+            .radio-tile-label { padding: 0.6rem 0.25rem; font-size: 0.8rem; }
+            .checkbox-group { grid-template-columns: 1fr; gap: 0.5rem; }
+            .outgoing-row {
+                grid-template-columns: 1fr 1fr;
+                gap: 0.5rem;
+                background: var(--bg-global);
+                padding: 0.75rem;
+                border-radius: 8px;
+                border: 1px solid var(--border-color);
+            }
+            .outgoing-row input.out-name { grid-column: span 2; background: var(--white-card); }
+            .outgoing-row .input-with-prefix { background: var(--white-card); }
+            .btn-delete {
+                grid-column: span 2;
+                background: rgba(229, 62, 62, 0.08);
+                border-radius: 4px;
+                padding: 0.35rem;
+                font-size: 1.1rem;
+                margin-top: 0.25rem;
+            }
+            .btn-delete::after { content: " Remove Entry"; font-size: 0.8rem; font-family: var(--font-ui); font-weight: 500; }
+            input[type="text"], input[type="number"], select { font-size: 0.9rem; padding: 0.65rem; }
+            .chart-legend { grid-template-columns: 1fr; }
+        }
+
+        /* --- PRINT STYLES --- */
+        @media print {
+            @page { size: a4 portrait; margin: 12mm 15mm; }
+            body { background: #FFFFFF !important; color: #000000 !important; padding: 0 !important; font-size: 11px !important; line-height: 1.4 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .container { max-width: 100% !important; width: 100% !important; }
+            header { margin-bottom: 1.5rem !important; padding-bottom: 0.75rem !important; border-bottom: 1px solid #CBD5E0 !important; }
+            header h1 { font-size: 1.8rem !important; }
+            header p { font-size: 0.9rem !important; }
+            .workspace-grid { display: flex !important; flex-direction: column !important; gap: 1rem !important; }
+            .panel { background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; page-break-inside: avoid; break-inside: avoid; }
+            .panel-title { font-size: 1.1rem !important; margin-bottom: 0.75rem !important; padding-bottom: 0.25rem !important; border-bottom: 1px solid #718096 !important; }
+            .form-group { margin-bottom: 0.6rem !important; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dotted #E2E8F0; padding-bottom: 0.25rem; }
+            label { font-size: 0.75rem !important; margin-bottom: 0 !important; color: #2D3748 !important; }
+            .radio-tile-group, .slider-container input, .lock-container, .checkbox-group, .outgoings-list, .btn-add, .tabs-nav, .actions-block { display: none !important; }
+            .slider-container { display: block !important; }
+            input[type="text"], input[type="number"], select { background: transparent !important; border: none !important; padding: 0 !important; font-size: 11px !important; color: #000000 !important; text-align: right; width: auto !important; }
+            .input-with-prefix { display: flex; justify-content: flex-end; align-items: center; gap: 2px; border: none !important; background: transparent !important; }
+            .input-with-prefix span { position: static !important; transform: none !important; font-size: 11px !important; color: #000000 !important; padding: 0 !important; }
+            details { display: block !important; }
+            details summary { cursor: default !important; background: transparent !important; }
+            .summary-arrow { display: none !important; }
+            .ledger-summary { padding: 0.4rem 0 !important; font-size: 11px !important; border-bottom: 1px solid #E2E8F0 !important; }
+            .summary-total-val { margin-right: 0 !important; }
+            .ledger-content { padding: 0 !important; }
+            .ledger-row { padding: 0.25rem 0 0.25rem 1rem !important; font-size: 11px !important; }
+            .ledger-row.net-income-row { background: #F4EFEA !important; padding: 0.4rem 0.5rem !important; margin: 0.4rem 0 !important; border-top: 1px solid #C5A880 !important; border-bottom: 1px solid #C5A880 !important; font-size: 11px !important; }
+            .ledger-row.total-row { background: #2F855A !important; color: #FFFFFF !important; padding: 0.5rem 0.75rem !important; margin-top: 0.5rem !important; border-radius: 4px !important; font-size: 12px !important; }
+            .chart-container { margin: 0.75rem 0 !important; page-break-inside: avoid; break-inside: avoid; }
+            .donut-svg { width: 140px !important; height: 140px !important; }
+            .chart-legend-container { display: block !important; max-height: none !important; overflow: visible !important; border-top: 1px solid #CBD5E0 !important; padding-top: 0.5rem !important; margin-top: 0.25rem !important; page-break-inside: avoid; break-inside: avoid; }
+            .chart-legend { grid-template-columns: repeat(3, 1fr) !important; gap: 0.5rem !important; font-size: 10px !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Bespoke Salary & Budget Statement</h1>
+            <p>Fiscal Year 2026 / 2027 Projections</p>
+        </header>
+
+        <div class="workspace-grid">
+            
+            <section class="panel">
+                <h2 class="panel-title">Parameters</h2>
+                
+                <div class="form-group">
+                    <label>Input Entry Track</label>
+                    <div class="radio-tile-group">
+                        <label>
+                            <input type="radio" name="inputTrack" value="annual" checked onchange="handleTrackChange()">
+                            <span class="radio-tile-label">Annual</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="inputTrack" value="monthly" onchange="handleTrackChange()">
+                            <span class="radio-tile-label">Monthly</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="inputTrack" value="weekly" onchange="handleTrackChange()">
+                            <span class="radio-tile-label">Weekly</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label id="salaryLabel">Gross Annual Salary</label>
+                    <div class="input-with-prefix">
+                        <span>£</span>
+                        <input type="number" id="grossInput" value="60000" min="0" step="100" oninput="calculateState()">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Workplace Pension Allocation</label>
+                    <div class="slider-container">
+                        <input type="range" id="pensionInput" min="0" max="30" value="5" step="1" oninput="updatePensionSliderLabel(); calculateState();">
+                        <span class="slider-value" id="pensionVal">5%</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Tax Code</label>
+                    <input type="text" id="taxCodeInput" value="1257L" oninput="calculateState()">
+                    <div class="lock-container">
+                        <input type="checkbox" id="lockTaxCode" checked onchange="handleTaxCodeLock()">
+                        <label for="lockTaxCode" style="text-transform:none; font-weight:normal; margin:0; display:inline;">Lock to Standard Allowance (1257L)</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Student Loan Schemes</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="slPlan1" class="ug-loan" onchange="handleUndergradLoanExclusion(this)"> Plan 1
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="slPlan2" class="ug-loan" onchange="handleUndergradLoanExclusion(this)"> Plan 2
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="slPlan4" class="ug-loan" onchange="handleUndergradLoanExclusion(this)"> Plan 4
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="slPostgrad" onchange="calculateState()"> Postgraduate
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom:0; border:none; padding:0; display:block;">
+                    <label style="margin-bottom: 0.5rem;">Committed Outgoings</label>
+                    <div class="outgoings-list" id="outgoingsContainer"></div>
+                    <button type="button" class="btn-add" onclick="addOutgoingRow()">+ Add Additional Outgoing</button>
+                </div>
+            </section>
+
+            <section class="panel">
+                <nav class="tabs-nav">
+                    <button class="tab-btn active" id="tab-annual" onclick="switchOutputView('annual')">Annual Plan</button>
+                    <button class="tab-btn" id="tab-monthly" onclick="switchOutputView('monthly')">Monthly Plan</button>
+                    <button class="tab-btn" id="tab-weekly" onclick="switchOutputView('weekly')">Weekly Plan</button>
+                </nav>
+
+                <h2 class="panel-title">Statement Overview <span id="statementPeriodLabel" style="font-size:0.9rem; font-family:var(--font-ui); color:var(--gold-soft);">Annual</span></h2>
+                
+                <div class="ledger">
+                    <details class="ledger-group" open>
+                        <summary class="ledger-summary">
+                            <div class="summary-left"><span class="summary-arrow"></span> 1. Gross Revenue</div>
+                            <span class="summary-total-val" id="lblGross" style="color: var(--navy-deep);">£0.00</span>
+                        </summary>
+                        <div class="ledger-content">
+                            <div class="ledger-row">
+                                <span>Baseline Career Earnings</span>
+                                <span class="ledger-val" id="lblGrossSub">£0.00</span>
+                            </div>
+                        </div>
+                    </details>
+
+                    <details class="ledger-group" open>
+                        <summary class="ledger-summary">
+                            <div class="summary-left"><span class="summary-arrow"></span> 2. Total Deductions</div>
+                            <span class="summary-total-val" id="lblTotalDeductions" style="color:#C53030;">£0.00</span>
+                        </summary>
+                        <div class="ledger-content">
+                            <div class="ledger-row highlighted-deduction">
+                                <span>• Workplace Pension Allocation</span>
+                                <span class="ledger-val" id="lblPension">£0.00</span>
+                            </div>
+                            <div class="ledger-row highlighted-deduction">
+                                <span>• Income Tax Liability</span>
+                                <span class="ledger-val" id="lblIncomeTax">£0.00</span>
+                            </div>
+                            <div class="ledger-row highlighted-deduction">
+                                <span>• National Insurance Contribution</span>
+                                <span class="ledger-val" id="lblNI">£0.00</span>
+                            </div>
+                            <div class="ledger-row highlighted-deduction" id="rowStudentLoan">
+                                <span>• Student Loan Repayments</span>
+                                <span class="ledger-val" id="lblStudentLoan">£0.00</span>
+                            </div>
+                        </div>
+                    </details>
+
+                    <div class="ledger-row net-income-row">
+                        <span>3. Take Home</span>
+                        <span class="ledger-val" id="lblNetTakeHome">£0.00</span>
+                    </div>
+
+                    <details class="ledger-group" open>
+                        <summary class="ledger-summary">
+                            <div class="summary-left"><span class="summary-arrow"></span> 4. Committed Outgoings</div>
+                            <span class="summary-total-val" id="lblOutgoings" style="color:var(--gold-soft);">£0.00</span>
+                        </summary>
+                        <div class="ledger-content" id="lblOutgoingsBreakdownContainer"></div>
+                    </details>
+
+                    <div class="ledger-row total-row">
+                        <span>5. Retained Free Capital</span>
+                        <span class="ledger-val" id="lblNetFree">£0.00</span>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <svg class="donut-svg" id="budgetDonutSvg" width="180" height="180" viewBox="0 0 200 200"></svg>
+                </div>
+
+                <div class="chart-legend-container">
+                    <div class="chart-legend" id="budgetChartLegend"></div>
+                </div>
+
+                <div class="actions-block">
+                    <button class="btn-export" onclick="window.print()">Export Statement as PDF</button>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <script>
+        let globalState = {
+            annual: { gross: 0, pension: 0, incomeTax: 0, ni: 0, studentLoan: 0, outgoings: 0, netTakeHome: 0, netFree: 0, itemizedOutgoings: [] },
+            monthly: { gross: 0, pension: 0, incomeTax: 0, ni: 0, studentLoan: 0, outgoings: 0, netTakeHome: 0, netFree: 0, itemizedOutgoings: [] },
+            weekly: { gross: 0, pension: 0, incomeTax: 0, ni: 0, studentLoan: 0, outgoings: 0, netTakeHome: 0, netFree: 0, itemizedOutgoings: [] }
+        };
+
+        let activeOutputView = 'annual'; 
+        let internalActiveInputTrack = 'annual';
+
+        const designColors = [
+            '#C5A880', '#4A5568', '#718096', '#A0AEC0', 
+            '#CBD5E0', '#B7791F', '#D69E2E', '#ECC94B'
+        ];
+        const colorFreeCapital = '#2F855A'; 
+        const colorOverdraftLimit = '#E53E3E'; 
+
+        const deficitColors = [
+            '#9B2C2C', '#C53030', '#E53E3E', '#F56565', '#FEB2B2'
+        ];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            seedInitialOutgoings();
+            calculateState();
+        });
+
+        function seedInitialOutgoings() {
+            const defaults = [
+                { name: 'Rent / Mortgage', value: 1200, freq: 'monthly' },
+                { name: 'Council Tax', value: 160, freq: 'monthly' },
+                { name: 'Utility Bills', value: 200, freq: 'monthly' },
+                { name: 'Groceries', value: 80, freq: 'weekly' }
+            ];
+            
+            const container = document.getElementById('outgoingsContainer');
+            container.innerHTML = '';
+            defaults.forEach(item => createOutgoingRowDOM(item.name, item.value, item.freq));
+        }
+
+        function createOutgoingRowDOM(name = '', value = 0, freq = 'monthly') {
+            const container = document.getElementById('outgoingsContainer');
+            const row = document.createElement('div');
+            row.className = 'outgoing-row';
+            
+            row.innerHTML = `
+                <input type="text" placeholder="Bill Label" value="${name}" class="out-name" oninput="calculateState()">
+                <div class="input-with-prefix">
+                    <span>£</span>
+                    <input type="number" value="${value}" min="0" step="5" class="out-val" oninput="calculateState()">
+                </div>
+                <select class="out-freq" onchange="calculateState()">
+                    <option value="annual" ${freq === 'annual' ? 'selected' : ''}>Annum</option>
+                    <option value="monthly" ${freq === 'monthly' ? 'selected' : ''}>Month</option>
+                    <option value="weekly" ${freq === 'weekly' ? 'selected' : ''}>Week</option>
+                </select>
+                <button type="button" class="btn-delete" onclick="this.parentElement.remove(); calculateState();">×</button>
+            `;
+            container.appendChild(row);
+        }
+
+        function addOutgoingRow() {
+            createOutgoingRowDOM('', 0, 'monthly');
+            calculateState();
+        }
+
+        function handleTrackChange() {
+            const selectedTrack = document.querySelector('input[name="inputTrack"]:checked').value;
+            const label = document.getElementById('salaryLabel');
+            
+            if (selectedTrack === 'annual') label.textContent = "Gross Annual Salary";
+            else if (selectedTrack === 'monthly') label.textContent = "Gross Monthly Pay";
+            else label.textContent = "Gross Weekly Pay";
+            
+            internalActiveInputTrack = selectedTrack;
+            calculateState();
+        }
+
+        function handleTaxCodeLock() {
+            const locked = document.getElementById('lockTaxCode').checked;
+            const field = document.getElementById('taxCodeInput');
+            if (locked) {
+                field.value = "1257L";
+                field.readOnly = true;
+            } else {
+                field.readOnly = false;
+            }
+            calculateState();
+        }
+
+        function handleUndergradLoanExclusion(src) {
+            if (src.checked) {
+                document.querySelectorAll('.ug-loan').forEach(box => {
+                    if (box !== src) box.checked = false;
+                });
+            }
+            calculateState();
+        }
+
+        function updatePensionSliderLabel() {
+            document.getElementById('pensionVal').textContent = document.getElementById('pensionInput').value + '%';
+        }
+
+        function switchOutputView(view) {
+            activeOutputView = view;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab-${view}`).classList.add('active');
+            
+            const label = document.getElementById('statementPeriodLabel');
+            label.textContent = view.charAt(0).toUpperCase() + view.slice(1);
+            
+            renderStateDOM();
+        }
+
+        function calculateState() {
+            let rawInputVal = parseFloat(document.getElementById('grossInput').value) || 0;
+            let grossAnnual = 0;
+            
+            if (internalActiveInputTrack === 'annual') grossAnnual = rawInputVal;
+            else if (internalActiveInputTrack === 'monthly') grossAnnual = rawInputVal * 12;
+            else grossAnnual = rawInputVal * 52;
+
+            let pensionPct = parseFloat(document.getElementById('pensionInput').value) || 0;
+            let annualPension = grossAnnual * (pensionPct / 100);
+            let taxableSalary = Math.max(0, grossAnnual - annualPension);
+
+            let personalAllowance = 12570;
+            let taxCode = document.getElementById('taxCodeInput').value.trim().toUpperCase();
+            if (taxCode.match(/^\d+[LMTY]$/)) {
+                personalAllowance = parseInt(taxCode) * 10;
+            }
+            
+            if (grossAnnual > 100000) {
+                let reduction = Math.floor((grossAnnual - 100000) / 2);
+                personalAllowance = Math.max(0, personalAllowance - reduction);
+            }
+
+            let annualIncomeTax = 0;
+            let remainingTaxable = taxableSalary;
+            
+            if (remainingTaxable > personalAllowance) {
+                let basicPot = Math.min(remainingTaxable - personalAllowance, 37700);
+                annualIncomeTax += basicPot * 0.20;
+                remainingTaxable -= (personalAllowance + basicPot);
+                
+                if (remainingTaxable > 0) {
+                    let higherPot = Math.min(remainingTaxable, 74430);
+                    annualIncomeTax += higherPot * 0.40;
+                    remainingTaxable -= higherPot;
+                    
+                    if (remainingTaxable > 0) {
+                        annualIncomeTax += remainingTaxable * 0.45;
+                    }
+                }
+            }
+
+            let annualNI = 0;
+            let niThreshold = 12570; 
+            let niUpperLimit = 50270;
+            if (grossAnnual > niThreshold) {
+                let standardBase = Math.min(grossAnnual, niUpperLimit) - niThreshold;
+                annualNI += standardBase * 0.08; 
+                if (grossAnnual > niUpperLimit) {
+                    annualNI += (grossAnnual - niUpperLimit) * 0.02;
+                }
+            }
+
+            let annualStudentLoan = 0;
+            if (document.getElementById('slPlan1').checked && grossAnnual > 24990) {
+                annualStudentLoan += (grossAnnual - 24990) * 0.09;
+            } else if (document.getElementById('slPlan2').checked && grossAnnual > 27295) {
+                annualStudentLoan += (grossAnnual - 27295) * 0.09;
+            } else if (document.getElementById('slPlan4').checked && grossAnnual > 31395) {
+                annualStudentLoan += (grossAnnual - 31395) * 0.09;
+            }
+            if (document.getElementById('slPostgrad').checked && grossAnnual > 21000) {
+                annualStudentLoan += (grossAnnual - 21000) * 0.06;
+            }
+
+            let annualDeductions = annualPension + annualIncomeTax + annualNI + annualStudentLoan;
+            let annualNetTakeHome = Math.max(0, grossAnnual - annualDeductions);
+
+            let annualOutgoingsTotal = 0;
+            let outgoingsList = [];
+            
+            const rows = document.querySelectorAll('.outgoing-row');
+            rows.forEach(row => {
+                let name = row.querySelector('.out-name').value.trim() || 'Unassigned Outgoing';
+                let val = parseFloat(row.querySelector('.out-val').value) || 0;
+                let freq = row.querySelector('.out-freq').value;
+                
+                let rowAnnual = 0;
+                if (freq === 'annual') rowAnnual = val;
+                else if (freq === 'monthly') rowAnnual = val * 12;
+                else rowAnnual = val * 52;
+                
+                annualOutgoingsTotal += rowAnnual;
+                outgoingsList.push({ name: name, annual: rowAnnual });
+            });
+
+            populateTimeframeState('annual', grossAnnual, annualPension, annualIncomeTax, annualNI, annualStudentLoan, annualOutgoingsTotal, annualNetTakeHome, outgoingsList, 1);
+            populateTimeframeState('monthly', grossAnnual, annualPension, annualIncomeTax, annualNI, annualStudentLoan, annualOutgoingsTotal, annualNetTakeHome, outgoingsList, 12);
+            populateTimeframeState('weekly', grossAnnual, annualPension, annualIncomeTax, annualNI, annualStudentLoan, annualOutgoingsTotal, annualNetTakeHome, outgoingsList, 52);
+
+            renderStateDOM();
+        }
+
+        function populateTimeframeState(key, gross, pen, tax, ni, sl, out, takeHome, itemized, divisor) {
+            globalState[key].gross = gross / divisor;
+            globalState[key].pension = pen / divisor;
+            globalState[key].incomeTax = tax / divisor;
+            globalState[key].ni = ni / divisor;
+            globalState[key].studentLoan = sl / divisor;
+            globalState[key].outgoings = out / divisor;
+            globalState[key].netTakeHome = takeHome / divisor;
+            globalState[key].netFree = (takeHome - out) / divisor;
+            
+            globalState[key].itemizedOutgoings = itemized.map(x => {
+                return { name: x.name, value: x.annual / divisor };
+            });
+        }
+
+        function renderStateDOM() {
+            const data = globalState[activeOutputView];
+            
+            document.getElementById('lblGross').textContent = formatCurrency(data.gross);
+            document.getElementById('lblGrossSub').textContent = formatCurrency(data.gross);
+            
+            let totalDeductions = data.pension + data.incomeTax + data.ni + data.studentLoan;
+            document.getElementById('lblTotalDeductions').textContent = formatCurrency(totalDeductions);
+            document.getElementById('lblPension').textContent = formatCurrency(data.pension);
+            document.getElementById('lblIncomeTax').textContent = formatCurrency(data.incomeTax);
+            document.getElementById('lblNI').textContent = formatCurrency(data.ni);
+            document.getElementById('lblStudentLoan').textContent = formatCurrency(data.studentLoan);
+            
+            const slRow = document.getElementById('rowStudentLoan');
+            if(totalDeductions === data.pension + data.incomeTax + data.ni && data.studentLoan === 0) {
+                slRow.style.display = 'none';
+            } else {
+                slRow.style.display = 'flex';
+            }
+
+            document.getElementById('lblNetTakeHome').textContent = formatCurrency(data.netTakeHome);
+            document.getElementById('lblOutgoings').textContent = formatCurrency(data.outgoings);
+            
+            const outContainer = document.getElementById('lblOutgoingsBreakdownContainer');
+            outContainer.innerHTML = '';
+            
+            if(data.itemizedOutgoings.length === 0) {
+                outContainer.innerHTML = `<div class="ledger-row"><span>No structural liabilities defined</span><span>£0.00</span></div>`;
+            } else {
+                data.itemizedOutgoings.forEach(item => {
+                    let r = document.createElement('div');
+                    r.className = 'ledger-row highlighted-outgoing';
+                    r.innerHTML = `<span>• ${item.name}</span><span class="ledger-val">${formatCurrency(item.value)}</span>`;
+                    outContainer.appendChild(r);
+                });
+            }
+
+            const freeCapitalLabel = document.getElementById('lblNetFree');
+            freeCapitalLabel.textContent = formatCurrency(data.netFree);
+            
+            if (data.netFree < 0) {
+                freeCapitalLabel.parentElement.style.backgroundColor = colorOverdraftLimit;
+            } else {
+                freeCapitalLabel.parentElement.style.backgroundColor = colorFreeCapital;
+            }
+
+            renderChartVisualization(data);
+        }
+
+        function formatCurrency(num) {
+            return '£' + num.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        // ABSOLUTE PATH ARCHITECTURE ENGINE: Converts polar coordinate calculations seamlessly into SVG geometric path coordinates
+        function getCoordinatesForPercent(percent) {
+            const x = Math.cos(2 * Math.PI * percent);
+            const y = Math.sin(2 * Math.PI * percent);
+            return [x, y];
+        }
+
+        function renderChartVisualization(data) {
+            const svg = document.getElementById('budgetDonutSvg');
+            const legend = document.getElementById('budgetChartLegend');
+            svg.innerHTML = '';
+            legend.innerHTML = '';
+
+            let totalPool = data.netTakeHome;
+            let isOverBudget = data.outgoings > totalPool;
+
+            if (totalPool <= 0) {
+                svg.innerHTML = `<circle cx="100" cy="100" r="72" fill="none" stroke="#E2E8F0" stroke-width="24" />`;
+                legend.innerHTML = `<div class="legend-item"><span class="legend-dot" style="background:#E2E8F0;"></span>No Income Available</div>`;
+                return;
+            }
+
+            let chartSlices = [];
+
+            if (isOverBudget) {
+                let deficitPool = data.outgoings;
+                data.itemizedOutgoings.forEach((item, idx) => {
+                    if (item.value > 0) {
+                        let colorIdx = idx % deficitColors.length;
+                        chartSlices.push({ label: item.name, value: item.value, color: deficitColors[colorIdx], pool: deficitPool });
+                    }
+                });
+                
+                let banner = document.createElement('div');
+                banner.className = 'deficit-alert-banner';
+                banner.textContent = 'Outgoings Exceed Income';
+                legend.appendChild(banner);
+
+            } else {
+                data.itemizedOutgoings.forEach((item, idx) => {
+                    if (item.value > 0) {
+                        let colorIdx = idx % designColors.length;
+                        chartSlices.push({ label: item.name, value: item.value, color: designColors[colorIdx], pool: totalPool });
+                    }
+                });
+
+                if (data.netFree > 0) {
+                    chartSlices.push({ label: 'Free Capital', value: data.netFree, color: colorFreeCapital, pool: totalPool });
+                }
+            }
+
+            let cumulativePercent = 0;
+
+            chartSlices.forEach(slice => {
+                let slicePercent = slice.value / slice.pool;
+                
+                // Absolute exact coordinate generation limits
+                if (slicePercent >= 1) slicePercent = 0.9999; 
+
+                const [startX, startY] = getCoordinatesForPercent(cumulativePercent);
+                cumulativePercent += slicePercent;
+                const [endX, endY] = getCoordinatesForPercent(cumulativePercent);
+
+                // Offset the start rotation by 90 degrees (-0.25) to start beautifully at the top dead center
+                const radius = 72;
+                const cx = 100;
+                const cy = 100;
+
+                const angleOffset = -0.25;
+                const sX = cx + radius * Math.cos(2 * Math.PI * (cumulativePercent - slicePercent + angleOffset));
+                const sY = cy + radius * Math.sin(2 * Math.PI * (cumulativePercent - slicePercent + angleOffset));
+                const eX = cx + radius * Math.cos(2 * Math.PI * (cumulativePercent + angleOffset));
+                const eY = cy + radius * Math.sin(2 * Math.PI * (cumulativePercent + angleOffset));
+
+                const largeArcFlag = slicePercent > 0.5 ? 1 : 0;
+
+                // Render dynamic stroke coordinate path
+                const pathData = `
+                    M ${sX} ${sY}
+                    A ${radius} ${radius} 0 ${largeArcFlag} 1 ${eX} ${eY}
+                `;
+
+                let pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                pathEl.setAttribute("d", pathData);
+                pathEl.setAttribute("fill", "none");
+                pathEl.setAttribute("stroke", slice.color);
+                pathEl.setAttribute("stroke-width", "24");
+                svg.appendChild(pathEl);
+
+                // Populate Legend UI Elements
+                let pctLabel = (slicePercent * 100).toFixed(1) + '%';
+                let leg = document.createElement('div');
+                leg.className = 'legend-item';
+                leg.innerHTML = `<span class="legend-dot" style="background:${slice.color};"></span>${slice.label} (${pctLabel})`;
+                legend.appendChild(leg);
+            });
+        }
+    </script>
+</body>
+</html>
