@@ -338,38 +338,6 @@
             border-style: solid;
         }
 
-        /* --- OUTPUT SECTION / TABS --- */
-        .tabs-nav {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0.5rem;
-            background: var(--bg-global);
-            padding: 0.35rem;
-            border-radius: 8px;
-            margin-bottom: 2rem;
-        }
-
-        .tab-btn {
-            background: transparent;
-            border: none;
-            padding: 0.6rem;
-            font-weight: 500;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            cursor: pointer;
-            border-radius: 6px;
-            transition: var(--transition-smooth);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .tab-btn.active {
-            background: var(--white-card);
-            color: var(--navy-deep);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-
         /* --- STATEMENT LEDGER --- */
         .ledger {
             margin-bottom: 1.5rem;
@@ -632,7 +600,7 @@
             .panel-title { font-size: 1.1rem !important; margin-bottom: 0.75rem !important; padding-bottom: 0.25rem !important; border-bottom: 1px solid #718096 !important; }
             .form-group { margin-bottom: 0.6rem !important; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dotted #E2E8F0; padding-bottom: 0.25rem; }
             label { font-size: 0.75rem !important; margin-bottom: 0 !important; color: #2D3748 !important; }
-            .radio-tile-group, .slider-container input, .lock-container, .checkbox-group, .outgoings-list, .btn-add, .tabs-nav, .actions-block { display: none !important; }
+            .radio-tile-group, .slider-container input, .lock-container, .checkbox-group, .outgoings-list, .btn-add, .actions-block { display: none !important; }
             .slider-container { display: block !important; }
             input[type="text"], input[type="number"], select { background: transparent !important; border: none !important; padding: 0 !important; font-size: 11px !important; color: #000000 !important; text-align: right; width: auto !important; }
             .input-with-prefix { display: flex; justify-content: flex-end; align-items: center; gap: 2px; border: none !important; background: transparent !important; }
@@ -661,6 +629,8 @@
             <p>Fiscal Year 2026 / 2027 Projections</p>
         </header>
 
+        <div id="alertAnchor"></div>
+
         <div class="workspace-grid">
             
             <section class="panel">
@@ -688,7 +658,7 @@
                     <label id="salaryLabel">Gross Annual Salary</label>
                     <div class="input-with-prefix">
                         <span>£</span>
-                        <input type="number" id="grossInput" value="60000" min="0" step="100" oninput="calculateState()">
+                        <input type="number" id="grossInput" value="60000" min="0" step="100" oninput="handleSalaryInput()">
                     </div>
                 </div>
 
@@ -735,12 +705,6 @@
             </section>
 
             <section class="panel">
-                <nav class="tabs-nav">
-                    <button class="tab-btn active" id="tab-annual" onclick="switchOutputView('annual')">Annual Plan</button>
-                    <button class="tab-btn" id="tab-monthly" onclick="switchOutputView('monthly')">Monthly Plan</button>
-                    <button class="tab-btn" id="tab-weekly" onclick="switchOutputView('weekly')">Weekly Plan</button>
-                </nav>
-
                 <h2 class="panel-title">Statement Overview <span id="statementPeriodLabel" style="font-size:0.9rem; font-family:var(--font-ui); color:var(--gold-soft);">Annual</span></h2>
                 
                 <div class="ledger">
@@ -818,14 +782,13 @@
     </div>
 
     <script>
-        let globalState = {
-            annual: { gross: 0, pension: 0, incomeTax: 0, ni: 0, studentLoan: 0, outgoings: 0, netTakeHome: 0, netFree: 0, itemizedOutgoings: [] },
-            monthly: { gross: 0, pension: 0, incomeTax: 0, ni: 0, studentLoan: 0, outgoings: 0, netTakeHome: 0, netFree: 0, itemizedOutgoings: [] },
-            weekly: { gross: 0, pension: 0, incomeTax: 0, ni: 0, studentLoan: 0, outgoings: 0, netTakeHome: 0, netFree: 0, itemizedOutgoings: [] }
-        };
+        // Track baseline master annual gross separately to safely perform synchronized track conversions
+        let masterAnnualGross = 60000;
+        let currentActiveInputTrack = 'annual';
 
-        let activeOutputView = 'annual'; 
-        let internalActiveInputTrack = 'annual';
+        let globalState = {
+            annual: { gross: 0, pension: 0, incomeTax: 0, ni: 0, studentLoan: 0, outgoings: 0, netTakeHome: 0, netFree: 0, itemizedOutgoings: [] }
+        };
 
         const designColors = [
             '#C5A880', '#4A5568', '#718096', '#A0AEC0', 
@@ -834,10 +797,6 @@
         const colorFreeCapital = '#2F855A'; 
         const colorOverdraftLimit = '#E53E3E'; 
 
-        const deficitColors = [
-            '#9B2C2C', '#C53030', '#E53E3E', '#F56565', '#FEB2B2'
-        ];
-
         window.addEventListener('DOMContentLoaded', () => {
             seedInitialOutgoings();
             calculateState();
@@ -845,348 +804,390 @@
 
         function seedInitialOutgoings() {
             const defaults = [
-                { name: 'Rent / Mortgage', value: 1200, freq: 'monthly' },
-                { name: 'Council Tax', value: 160, freq: 'monthly' },
-                { name: 'Utility Bills', value: 200, freq: 'monthly' },
-                { name: 'Groceries', value: 80, freq: 'weekly' }
+                { name: 'Rent / Mortgage', amount: 1200, period: 'monthly' },
+                { name: 'Council Tax', amount: 160, period: 'monthly' },
+                { name: 'Utilities', amount: 200, period: 'monthly' },
+                { name: 'Groceries & Living', amount: 400, period: 'monthly' }
             ];
             
             const container = document.getElementById('outgoingsContainer');
-            container.innerHTML = '';
-            defaults.forEach(item => createOutgoingRowDOM(item.name, item.value, item.freq));
+            defaults.forEach(item => {
+                container.appendChild(createOutgoingRowElement(item.name, item.amount, item.period));
+            });
         }
 
-        function createOutgoingRowDOM(name = '', value = 0, freq = 'monthly') {
-            const container = document.getElementById('outgoingsContainer');
-            const row = document.createElement('div');
-            row.className = 'outgoing-row';
+        function createOutgoingRowElement(name = '', amount = 0, period = 'monthly') {
+            const div = document.createElement('div');
+            div.className = 'outgoing-row';
             
-            row.innerHTML = `
-                <input type="text" placeholder="Bill Label" value="${name}" class="out-name" oninput="calculateState()">
+            div.innerHTML = `
+                <input type="text" class="out-name" value="${name}" placeholder="Outgoing Label" oninput="calculateState()">
                 <div class="input-with-prefix">
                     <span>£</span>
-                    <input type="number" value="${value}" min="0" step="5" class="out-val" oninput="calculateState()">
+                    <input type="number" class="out-amount" value="${amount}" min="0" step="10" oninput="calculateState()">
                 </div>
-                <select class="out-freq" onchange="calculateState()">
-                    <option value="annual" ${freq === 'annual' ? 'selected' : ''}>Annum</option>
-                    <option value="monthly" ${freq === 'monthly' ? 'selected' : ''}>Month</option>
-                    <option value="weekly" ${freq === 'weekly' ? 'selected' : ''}>Week</option>
+                <select class="out-period" onchange="calculateState()">
+                    <option value="annual" ${period === 'annual' ? 'selected' : ''}>Annual</option>
+                    <option value="monthly" ${period === 'monthly' ? 'selected' : ''}>Monthly</option>
+                    <option value="weekly" ${period === 'weekly' ? 'selected' : ''}>Weekly</option>
                 </select>
-                <button type="button" class="btn-delete" onclick="this.parentElement.remove(); calculateState();">×</button>
+                <button type="button" class="btn-delete" onclick="removeOutgoingRow(this)">×</button>
             `;
-            container.appendChild(row);
+            return div;
         }
 
         function addOutgoingRow() {
-            createOutgoingRowDOM('', 0, 'monthly');
+            const container = document.getElementById('outgoingsContainer');
+            container.appendChild(createOutgoingRowElement('', 0, 'monthly'));
+            calculateState();
+        }
+
+        function removeOutgoingRow(buttonElement) {
+            buttonElement.parentElement.remove();
             calculateState();
         }
 
         function handleTrackChange() {
-            const selectedTrack = document.querySelector('input[name="inputTrack"]:checked').value;
-            const label = document.getElementById('salaryLabel');
+            const currentInputVal = parseFloat(document.getElementById('grossInput').value) || 0;
             
-            if (selectedTrack === 'annual') label.textContent = "Gross Annual Salary";
-            else if (selectedTrack === 'monthly') label.textContent = "Gross Monthly Pay";
-            else label.textContent = "Gross Weekly Pay";
-            
-            internalActiveInputTrack = selectedTrack;
-            calculateState();
-        }
-
-        function handleTaxCodeLock() {
-            const locked = document.getElementById('lockTaxCode').checked;
-            const field = document.getElementById('taxCodeInput');
-            if (locked) {
-                field.value = "1257L";
-                field.readOnly = true;
+            // Normalize old track down to master baseline annual gross
+            if (currentActiveInputTrack === 'monthly') {
+                masterAnnualGross = currentInputVal * 12;
+            } else if (currentActiveInputTrack === 'weekly') {
+                masterAnnualGross = currentInputVal * 52;
             } else {
-                field.readOnly = false;
+                masterAnnualGross = currentInputVal;
             }
+
+            // Identify newly active timeline tracking track
+            const radioSelected = document.querySelector('input[name="inputTrack"]:checked').value;
+            currentActiveInputTrack = radioSelected;
+
+            const labelEl = document.getElementById('salaryLabel');
+            const inputEl = document.getElementById('grossInput');
+
+            if (radioSelected === 'monthly') {
+                labelEl.innerText = "Gross Monthly Salary";
+                inputEl.value = Math.round(masterAnnualGross / 12);
+            } else if (radioSelected === 'weekly') {
+                labelEl.innerText = "Gross Weekly Salary";
+                inputEl.value = Math.round(masterAnnualGross / 52);
+            } else {
+                labelEl.innerText = "Gross Annual Salary";
+                inputEl.value = Math.round(masterAnnualGross);
+            }
+
             calculateState();
         }
 
-        function handleUndergradLoanExclusion(src) {
-            if (src.checked) {
-                document.querySelectorAll('.ug-loan').forEach(box => {
-                    if (box !== src) box.checked = false;
-                });
+        function handleSalaryInput() {
+            const currentInputVal = parseFloat(document.getElementById('grossInput').value) || 0;
+            if (currentActiveInputTrack === 'monthly') {
+                masterAnnualGross = currentInputVal * 12;
+            } else if (currentActiveInputTrack === 'weekly') {
+                masterAnnualGross = currentInputVal * 52;
+            } else {
+                masterAnnualGross = currentInputVal;
             }
             calculateState();
         }
 
         function updatePensionSliderLabel() {
-            document.getElementById('pensionVal').textContent = document.getElementById('pensionInput').value + '%';
+            const val = document.getElementById('pensionInput').value;
+            document.getElementById('pensionVal').innerText = val + '%';
         }
 
-        function switchOutputView(view) {
-            activeOutputView = view;
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(`tab-${view}`).classList.add('active');
-            
-            const label = document.getElementById('statementPeriodLabel');
-            label.textContent = view.charAt(0).toUpperCase() + view.slice(1);
-            
-            renderStateDOM();
+        function handleTaxCodeLock() {
+            const lockedBox = document.getElementById('lockTaxCode');
+            const codeInput = document.getElementById('taxCodeInput');
+            if (lockedBox.checked) {
+                codeInput.value = "1257L";
+            }
+            calculateState();
         }
 
+        function handleUndergradLoanExclusion(checkboxElement) {
+            if (checkboxElement.checked) {
+                const undergradCheckboxes = document.querySelectorAll('.ug-loan');
+                undergradCheckboxes.forEach(box => {
+                    if (box !== checkboxElement) box.checked = false;
+                });
+            }
+            calculateState();
+        }
+
+        function formatCurrency(amount) {
+            return '£' + amount.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        /* --- COMPUTATION ENGINE --- */
         function calculateState() {
-            let rawInputVal = parseFloat(document.getElementById('grossInput').value) || 0;
-            let grossAnnual = 0;
-            
-            if (internalActiveInputTrack === 'annual') grossAnnual = rawInputVal;
-            else if (internalActiveInputTrack === 'monthly') grossAnnual = rawInputVal * 12;
-            else grossAnnual = rawInputVal * 52;
-
-            let pensionPct = parseFloat(document.getElementById('pensionInput').value) || 0;
-            let annualPension = grossAnnual * (pensionPct / 100);
-            let taxableSalary = Math.max(0, grossAnnual - annualPension);
-
-            let personalAllowance = 12570;
-            let taxCode = document.getElementById('taxCodeInput').value.trim().toUpperCase();
-            if (taxCode.match(/^\d+[LMTY]$/)) {
-                personalAllowance = parseInt(taxCode) * 10;
-            }
-            
-            if (grossAnnual > 100000) {
-                let reduction = Math.floor((grossAnnual - 100000) / 2);
-                personalAllowance = Math.max(0, personalAllowance - reduction);
+            // Force compliance if locked checked
+            if (document.getElementById('lockTaxCode').checked) {
+                document.getElementById('taxCodeInput').value = "1257L";
             }
 
-            let annualIncomeTax = 0;
-            let remainingTaxable = taxableSalary;
+            // Always calculate standard UK statutory allowances from annual master baseline perspective
+            const annualGross = masterAnnualGross;
+            const pensionPercent = parseFloat(document.getElementById('pensionInput').value) || 0;
+            const annualPension = annualGross * (pensionPercent / 100);
             
-            if (remainingTaxable > personalAllowance) {
-                let basicPot = Math.min(remainingTaxable - personalAllowance, 37700);
-                annualIncomeTax += basicPot * 0.20;
-                remainingTaxable -= (personalAllowance + basicPot);
-                
-                if (remainingTaxable > 0) {
-                    let higherPot = Math.min(remainingTaxable, 74430);
-                    annualIncomeTax += higherPot * 0.40;
-                    remainingTaxable -= higherPot;
-                    
-                    if (remainingTaxable > 0) {
-                        annualIncomeTax += remainingTaxable * 0.45;
-                    }
+            // Taxable income baseline computation
+            const standardAllowance = 12570;
+            let taxableIncome = Math.max(0, annualGross - annualPension - standardAllowance);
+            
+            // Simple UK Tax Brackets 2026/2027 Projections Simulation
+            let annualTax = 0;
+            if (taxableIncome > 0) {
+                if (taxableIncome <= 37700) {
+                    annualTax = taxableIncome * 0.20;
+                } else if (taxableIncome <= 125140) {
+                    annualTax = (37700 * 0.20) + ((taxableIncome - 37700) * 0.40);
+                } else {
+                    annualTax = (37700 * 0.20) + ((125140 - 37700) * 0.40) + ((taxableIncome - 125140) * 0.45);
                 }
             }
 
+            // Simple UK National Insurance Simulation (Class 1 Primary)
             let annualNI = 0;
-            let niThreshold = 12570; 
-            let niUpperLimit = 50270;
-            if (grossAnnual > niThreshold) {
-                let standardBase = Math.min(grossAnnual, niUpperLimit) - niThreshold;
-                annualNI += standardBase * 0.08; 
-                if (grossAnnual > niUpperLimit) {
-                    annualNI += (grossAnnual - niUpperLimit) * 0.02;
+            const niThreshold = 12570;
+            if (annualGross > niThreshold) {
+                annualNI = (Math.min(annualGross, 50270) - niThreshold) * 0.08;
+                if (annualGross > 50270) {
+                    annualNI += (annualGross - 50270) * 0.02;
                 }
             }
 
+            // Student Loan Simulation Core Rules
             let annualStudentLoan = 0;
-            if (document.getElementById('slPlan1').checked && grossAnnual > 24990) {
-                annualStudentLoan += (grossAnnual - 24990) * 0.09;
-            } else if (document.getElementById('slPlan2').checked && grossAnnual > 27295) {
-                annualStudentLoan += (grossAnnual - 27295) * 0.09;
-            } else if (document.getElementById('slPlan4').checked && grossAnnual > 31395) {
-                annualStudentLoan += (grossAnnual - 31395) * 0.09;
+            if (document.getElementById('slPlan1').checked && annualGross > 24990) {
+                annualStudentLoan += (annualGross - 24990) * 0.09;
+            } else if (document.getElementById('slPlan2').checked && annualGross > 27295) {
+                annualStudentLoan += (annualGross - 27295) * 0.09;
+            } else if (document.getElementById('slPlan4').checked && annualGross > 31395) {
+                annualStudentLoan += (annualGross - 31395) * 0.09;
             }
-            if (document.getElementById('slPostgrad').checked && grossAnnual > 21000) {
-                annualStudentLoan += (grossAnnual - 21000) * 0.06;
+            if (document.getElementById('slPostgrad').checked && annualGross > 21000) {
+                annualStudentLoan += (annualGross - 21000) * 0.06;
             }
 
-            let annualDeductions = annualPension + annualIncomeTax + annualNI + annualStudentLoan;
-            let annualNetTakeHome = Math.max(0, grossAnnual - annualDeductions);
-
+            // Sum itemized outgoings scaled to unified tracking paths
             let annualOutgoingsTotal = 0;
-            let outgoingsList = [];
-            
+            const itemizedList = [];
             const rows = document.querySelectorAll('.outgoing-row');
+            
             rows.forEach(row => {
-                let name = row.querySelector('.out-name').value.trim() || 'Unassigned Outgoing';
-                let val = parseFloat(row.querySelector('.out-val').value) || 0;
-                let freq = row.querySelector('.out-freq').value;
+                const nameStr = row.querySelector('.out-name').value || 'Unnamed Outgoing';
+                const amtNum = parseFloat(row.querySelector('.out-amount').value) || 0;
+                const periodStr = row.querySelector('.out-period').value;
                 
-                let rowAnnual = 0;
-                if (freq === 'annual') rowAnnual = val;
-                else if (freq === 'monthly') rowAnnual = val * 12;
-                else rowAnnual = val * 52;
-                
-                annualOutgoingsTotal += rowAnnual;
-                outgoingsList.push({ name: name, annual: rowAnnual });
+                let scaledAnnual = 0;
+                if (periodStr === 'monthly') scaledAnnual = amtNum * 12;
+                else if (periodStr === 'weekly') scaledAnnual = amtNum * 52;
+                else scaledAnnual = amtNum;
+
+                annualOutgoingsTotal += scaledAnnual;
+                itemizedList.push({ name: nameStr, annualAmount: scaledAnnual });
             });
 
-            populateTimeframeState('annual', grossAnnual, annualPension, annualIncomeTax, annualNI, annualStudentLoan, annualOutgoingsTotal, annualNetTakeHome, outgoingsList, 1);
-            populateTimeframeState('monthly', grossAnnual, annualPension, annualIncomeTax, annualNI, annualStudentLoan, annualOutgoingsTotal, annualNetTakeHome, outgoingsList, 12);
-            populateTimeframeState('weekly', grossAnnual, annualPension, annualIncomeTax, annualNI, annualStudentLoan, annualOutgoingsTotal, annualNetTakeHome, outgoingsList, 52);
+            // Calculate derived annual margins
+            const annualDeductions = annualPension + annualTax + annualNI + annualStudentLoan;
+            const annualTakeHome = Math.max(0, annualGross - annualDeductions);
+            const annualFreeCapital = annualTakeHome - annualOutgoingsTotal;
 
-            renderStateDOM();
-        }
+            // Set state variables scale configuration matching chosen timeline track selector
+            let scaleFactor = 1;
+            let displayLabel = "Annual";
 
-        function populateTimeframeState(key, gross, pen, tax, ni, sl, out, takeHome, itemized, divisor) {
-            globalState[key].gross = gross / divisor;
-            globalState[key].pension = pen / divisor;
-            globalState[key].incomeTax = tax / divisor;
-            globalState[key].ni = ni / divisor;
-            globalState[key].studentLoan = sl / divisor;
-            globalState[key].outgoings = out / divisor;
-            globalState[key].netTakeHome = takeHome / divisor;
-            globalState[key].netFree = (takeHome - out) / divisor;
-            
-            globalState[key].itemizedOutgoings = itemized.map(x => {
-                return { name: x.name, value: x.annual / divisor };
-            });
-        }
-
-        function renderStateDOM() {
-            const data = globalState[activeOutputView];
-            
-            document.getElementById('lblGross').textContent = formatCurrency(data.gross);
-            document.getElementById('lblGrossSub').textContent = formatCurrency(data.gross);
-            
-            let totalDeductions = data.pension + data.incomeTax + data.ni + data.studentLoan;
-            document.getElementById('lblTotalDeductions').textContent = formatCurrency(totalDeductions);
-            document.getElementById('lblPension').textContent = formatCurrency(data.pension);
-            document.getElementById('lblIncomeTax').textContent = formatCurrency(data.incomeTax);
-            document.getElementById('lblNI').textContent = formatCurrency(data.ni);
-            document.getElementById('lblStudentLoan').textContent = formatCurrency(data.studentLoan);
-            
-            const slRow = document.getElementById('rowStudentLoan');
-            if(totalDeductions === data.pension + data.incomeTax + data.ni && data.studentLoan === 0) {
-                slRow.style.display = 'none';
-            } else {
-                slRow.style.display = 'flex';
+            if (currentActiveInputTrack === 'monthly') {
+                scaleFactor = 12;
+                displayLabel = "Monthly";
+            } else if (currentActiveInputTrack === 'weekly') {
+                scaleFactor = 52;
+                displayLabel = "Weekly";
             }
 
-            document.getElementById('lblNetTakeHome').textContent = formatCurrency(data.netTakeHome);
-            document.getElementById('lblOutgoings').textContent = formatCurrency(data.outgoings);
+            const activeState = {
+                gross: annualGross / scaleFactor,
+                pension: annualPension / scaleFactor,
+                incomeTax: annualTax / scaleFactor,
+                ni: annualNI / scaleFactor,
+                studentLoan: annualStudentLoan / scaleFactor,
+                deductions: annualDeductions / scaleFactor,
+                netTakeHome: annualTakeHome / scaleFactor,
+                outgoings: annualOutgoingsTotal / scaleFactor,
+                netFree: annualFreeCapital / scaleFactor,
+                itemizedOutgoings: itemizedList.map(item => ({
+                    name: item.name,
+                    amount: item.annualAmount / scaleFactor
+                }))
+            };
+
+            updateUIDisplay(activeState, displayLabel);
+        }
+
+        /* --- UI RENDER SYSTEM --- */
+        function updateUIDisplay(state, labelText) {
+            document.getElementById('statementPeriodLabel').innerText = labelText;
             
-            const outContainer = document.getElementById('lblOutgoingsBreakdownContainer');
-            outContainer.innerHTML = '';
+            // Map text text labels
+            document.getElementById('lblGross').innerText = formatCurrency(state.gross);
+            document.getElementById('lblGrossSub').innerText = formatCurrency(state.gross);
             
-            if(data.itemizedOutgoings.length === 0) {
-                outContainer.innerHTML = `<div class="ledger-row"><span>No structural liabilities defined</span><span>£0.00</span></div>`;
+            document.getElementById('lblTotalDeductions').innerText = formatCurrency(state.deductions);
+            document.getElementById('lblPension').innerText = formatCurrency(state.pension);
+            document.getElementById('lblIncomeTax').innerText = formatCurrency(state.incomeTax);
+            document.getElementById('lblNI').innerText = formatCurrency(state.ni);
+            document.getElementById('lblStudentLoan').innerText = formatCurrency(state.studentLoan);
+            
+            document.getElementById('lblNetTakeHome').innerText = formatCurrency(state.netTakeHome);
+            document.getElementById('lblOutgoings').innerText = formatCurrency(state.outgoings);
+            document.getElementById('lblNetFree').innerText = formatCurrency(state.netFree);
+
+            // Toggle student loan visualization block wrapper
+            if (state.studentLoan === 0) {
+                document.getElementById('rowStudentLoan').style.display = 'none';
             } else {
-                data.itemizedOutgoings.forEach(item => {
-                    let r = document.createElement('div');
+                document.getElementById('rowStudentLoan').style.display = 'flex';
+            }
+
+            // Output itemized outgoings details structures
+            const breakdownContainer = document.getElementById('lblOutgoingsBreakdownContainer');
+            breakdownContainer.innerHTML = '';
+            
+            if (state.itemizedOutgoings.length === 0) {
+                breakdownContainer.innerHTML = `<div class="ledger-row"><span>No outgoings committed</span><span>£0.00</span></div>`;
+            } else {
+                state.itemizedOutgoings.forEach(item => {
+                    const r = document.createElement('div');
                     r.className = 'ledger-row highlighted-outgoing';
-                    r.innerHTML = `<span>• ${item.name}</span><span class="ledger-val">${formatCurrency(item.value)}</span>`;
-                    outContainer.appendChild(r);
+                    r.innerHTML = `<span>• ${item.name}</span><span class="ledger-val">${formatCurrency(item.amount)}</span>`;
+                    breakdownContainer.appendChild(r);
                 });
             }
 
-            const freeCapitalLabel = document.getElementById('lblNetFree');
-            freeCapitalLabel.textContent = formatCurrency(data.netFree);
-            
-            if (data.netFree < 0) {
-                freeCapitalLabel.parentElement.style.backgroundColor = colorOverdraftLimit;
+            // Inject structural layout structural changes based on deficit warnings thresholds
+            const alertAnchor = document.getElementById('alertAnchor');
+            if (state.netFree < 0) {
+                alertAnchor.innerHTML = `<div class="deficit-alert-banner">Warning: Committed Outgoings exceed Take Home allocations by ${formatCurrency(Math.abs(state.netFree))}</div>`;
             } else {
-                freeCapitalLabel.parentElement.style.backgroundColor = colorFreeCapital;
+                alertAnchor.innerHTML = '';
             }
 
-            renderChartVisualization(data);
+            // Redraw dynamic donut graph assets cleanly
+            renderDonutChart(state);
         }
 
-        function formatCurrency(num) {
-            return '£' + num.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
-
-        // ABSOLUTE PATH ARCHITECTURE ENGINE: Converts polar coordinate calculations seamlessly into SVG geometric path coordinates
-        function getCoordinatesForPercent(percent) {
-            const x = Math.cos(2 * Math.PI * percent);
-            const y = Math.sin(2 * Math.PI * percent);
-            return [x, y];
-        }
-
-        function renderChartVisualization(data) {
+        /* --- CORE GRAPH ENGINE FIX --- */
+        function renderDonutChart(state) {
             const svg = document.getElementById('budgetDonutSvg');
-            const legend = document.getElementById('budgetChartLegend');
+            const legendContainer = document.getElementById('budgetChartLegend');
+            
+            // Clear current layout nodes safely
             svg.innerHTML = '';
-            legend.innerHTML = '';
+            legendContainer.innerHTML = '';
 
-            let totalPool = data.netTakeHome;
-            let isOverBudget = data.outgoings > totalPool;
+            const takeHomeMax = state.netTakeHome;
 
-            if (totalPool <= 0) {
-                svg.innerHTML = `<circle cx="100" cy="100" r="72" fill="none" stroke="#E2E8F0" stroke-width="24" />`;
-                legend.innerHTML = `<div class="legend-item"><span class="legend-dot" style="background:#E2E8F0;"></span>No Income Available</div>`;
+            // Edge condition handling: completely blank revenue configurations
+            if (takeHomeMax <= 0) {
+                svg.innerHTML = `<circle cx="100" cy="100" r="70" fill="none" stroke="${colorOverdraftLimit}" stroke-width="24" />
+                                 <text x="100" y="105" text-anchor="middle" font-family="Inter" font-size="12" font-weight="600" fill="#2D3748">No Income</text>`;
+                legendContainer.innerHTML = `<div class="legend-item"><span class="legend-dot" style="background:${colorOverdraftLimit}"></span><span>Deficit Balance Threshold</span></div>`;
                 return;
             }
 
-            let chartSlices = [];
+            // Geometry metrics configuration calculations 
+            const radius = 70;
+            const circumference = 2 * Math.PI * radius; // Approx 439.82
 
-            if (isOverBudget) {
-                let deficitPool = data.outgoings;
-                data.itemizedOutgoings.forEach((item, idx) => {
-                    if (item.value > 0) {
-                        let colorIdx = idx % deficitColors.length;
-                        chartSlices.push({ label: item.name, value: item.value, color: deficitColors[colorIdx], pool: deficitPool });
-                    }
-                });
-                
-                let banner = document.createElement('div');
-                banner.className = 'deficit-alert-banner';
-                banner.textContent = 'Outgoings Exceed Income';
-                legend.appendChild(banner);
-
-            } else {
-                data.itemizedOutgoings.forEach((item, idx) => {
-                    if (item.value > 0) {
-                        let colorIdx = idx % designColors.length;
-                        chartSlices.push({ label: item.name, value: item.value, color: designColors[colorIdx], pool: totalPool });
-                    }
-                });
-
-                if (data.netFree > 0) {
-                    chartSlices.push({ label: 'Free Capital', value: data.netFree, color: colorFreeCapital, pool: totalPool });
-                }
+            // Deficit Threshold State Handling
+            if (state.netFree < 0) {
+                svg.innerHTML = `
+                    <circle class="donut-segment" cx="100" cy="100" r="${radius}" 
+                            stroke="${colorOverdraftLimit}" 
+                            stroke-dasharray="${circumference} ${circumference}" 
+                            stroke-dashoffset="0" 
+                            transform="rotate(-90 100 100)"/>
+                    <text x="100" y="105" text-anchor="middle" font-family="Inter" font-size="14" font-weight="600" fill="#C53030">Deficit</text>
+                `;
+                legendContainer.innerHTML = `
+                    <div class="legend-item" title="Deficit Volume Overrun">
+                        <span class="legend-dot" style="background:${colorOverdraftLimit}"></span>
+                        <span>Outgoings Overrun (${formatCurrency(Math.abs(state.netFree))})</span>
+                    </div>
+                `;
+                return;
             }
 
-            let cumulativePercent = 0;
+            // Normal Balance Composition State Mapping
+            let currentOffset = 0;
+            let colorIndex = 0;
 
-            chartSlices.forEach(slice => {
-                let slicePercent = slice.value / slice.pool;
-                
-                // Absolute exact coordinate generation limits
-                if (slicePercent >= 1) slicePercent = 0.9999; 
+            // 1. Process Itemized Outgoings Components
+            state.itemizedOutgoings.forEach(outgoing => {
+                if (outgoing.amount <= 0) return;
 
-                const [startX, startY] = getCoordinatesForPercent(cumulativePercent);
-                cumulativePercent += slicePercent;
-                const [endX, endY] = getCoordinatesForPercent(cumulativePercent);
+                // Determine precise spatial scaling properties matching exact current Take Home values
+                const componentRatio = outgoing.amount / takeHomeMax;
+                const segmentStrokeLength = circumference * componentRatio;
+                const activeColor = designColors[colorIndex % designColors.length];
+                colorIndex++;
 
-                // Offset the start rotation by 90 degrees (-0.25) to start beautifully at the top dead center
-                const radius = 72;
-                const cx = 100;
-                const cy = 100;
+                const circleElement = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circleElement.setAttribute("class", "donut-segment");
+                circleElement.setAttribute("cx", "100");
+                circleElement.setAttribute("cy", "100");
+                circleElement.setAttribute("r", radius.toString());
+                circleElement.setAttribute("stroke", activeColor);
+                circleElement.setAttribute("stroke-dasharray", `${segmentStrokeLength} ${circumference}`);
+                circleElement.setAttribute("stroke-dashoffset", (-currentOffset).toString());
+                circleElement.setAttribute("transform", "rotate(-90 100 100)");
+                svg.appendChild(circleElement);
 
-                const angleOffset = -0.25;
-                const sX = cx + radius * Math.cos(2 * Math.PI * (cumulativePercent - slicePercent + angleOffset));
-                const sY = cy + radius * Math.sin(2 * Math.PI * (cumulativePercent - slicePercent + angleOffset));
-                const eX = cx + radius * Math.cos(2 * Math.PI * (cumulativePercent + angleOffset));
-                const eY = cy + radius * Math.sin(2 * Math.PI * (cumulativePercent + angleOffset));
+                currentOffset += segmentStrokeLength;
 
-                const largeArcFlag = slicePercent > 0.5 ? 1 : 0;
-
-                // Render dynamic stroke coordinate path
-                const pathData = `
-                    M ${sX} ${sY}
-                    A ${radius} ${radius} 0 ${largeArcFlag} 1 ${eX} ${eY}
-                `;
-
-                let pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                pathEl.setAttribute("d", pathData);
-                pathEl.setAttribute("fill", "none");
-                pathEl.setAttribute("stroke", slice.color);
-                pathEl.setAttribute("stroke-width", "24");
-                svg.appendChild(pathEl);
-
-                // Populate Legend UI Elements
-                let pctLabel = (slicePercent * 100).toFixed(1) + '%';
-                let leg = document.createElement('div');
-                leg.className = 'legend-item';
-                leg.innerHTML = `<span class="legend-dot" style="background:${slice.color};"></span>${slice.label} (${pctLabel})`;
-                legend.appendChild(leg);
+                // Append Legend Node Elements safely
+                const legendItem = document.createElement('div');
+                legendItem.className = 'legend-item';
+                legendItem.title = outgoing.name;
+                legendItem.innerHTML = `<span class="legend-dot" style="background:${activeColor}"></span><span>${outgoing.name}</span>`;
+                legendContainer.appendChild(legendItem);
             });
+
+            // 2. Map Dynamic Free Capital Residual Filling Segment
+            if (state.netFree > 0) {
+                const freeRatio = state.netFree / takeHomeMax;
+                const freeStrokeLength = circumference * freeRatio;
+
+                const freeCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                freeCircle.setAttribute("class", "donut-segment");
+                freeCircle.setAttribute("cx", "100");
+                freeCircle.setAttribute("cy", "100");
+                freeCircle.setAttribute("r", radius.toString());
+                freeCircle.setAttribute("stroke", colorFreeCapital);
+                freeCircle.setAttribute("stroke-dasharray", `${freeStrokeLength} ${circumference}`);
+                freeCircle.setAttribute("stroke-dashoffset", (-currentOffset).toString());
+                freeCircle.setAttribute("transform", "rotate(-90 100 100)");
+                svg.appendChild(freeCircle);
+
+                const freeLegendItem = document.createElement('div');
+                freeLegendItem.className = 'legend-item';
+                freeLegendItem.innerHTML = `<span class="legend-dot" style="background:${colorFreeCapital}"></span><span>Free Capital</span>`;
+                legendContainer.appendChild(freeLegendItem);
+            }
+
+            // 3. Inject Central Text Summary Labels
+            const centralText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            centralText.setAttribute("x", "100");
+            centralText.setAttribute("y", "105");
+            centralText.setAttribute("text-anchor", "middle");
+            centralText.setAttribute("font-family", "Inter");
+            centralText.setAttribute("font-size", "11");
+            centralText.setAttribute("font-weight", "600");
+            centralText.setAttribute("fill", "var(--navy-deep)");
+            centralText.textContent = "";
+            svg.appendChild(centralText);
         }
     </script>
 </body>
