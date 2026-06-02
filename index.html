@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-    
+
     <style>
         /* --- DESIGN SYSTEM TOKENS --- */
         :root {
@@ -126,6 +126,10 @@
             grid-template-columns: repeat(3, 1fr);
             gap: 0.75rem;
             margin-bottom: 1.5rem;
+        }
+
+        .radio-tile-group.two-options {
+            grid-template-columns: repeat(2, 1fr);
         }
 
         .radio-tile-group label {
@@ -275,6 +279,12 @@
             color: var(--text-muted);
         }
 
+        .mode-helper {
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
         .outgoings-list {
             margin-bottom: 1rem;
             max-height: 280px;
@@ -297,6 +307,7 @@
             background-color: var(--bg-global);
             padding: 0.85rem 1rem;
         }
+
         .outgoing-row input.out-name:focus {
             outline: none;
             border-color: var(--gold-soft);
@@ -336,6 +347,14 @@
         .btn-add:hover {
             background: var(--gold-light);
             border-style: solid;
+        }
+
+        .gross-only {
+            transition: var(--transition-smooth);
+        }
+
+        .hidden {
+            display: none !important;
         }
 
         /* --- STATEMENT LEDGER --- */
@@ -600,7 +619,7 @@
             .panel-title { font-size: 1.1rem !important; margin-bottom: 0.75rem !important; padding-bottom: 0.25rem !important; border-bottom: 1px solid #718096 !important; }
             .form-group { margin-bottom: 0.6rem !important; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dotted #E2E8F0; padding-bottom: 0.25rem; }
             label { font-size: 0.75rem !important; margin-bottom: 0 !important; color: #2D3748 !important; }
-            .radio-tile-group, .slider-container input, .lock-container, .checkbox-group, .outgoings-list, .btn-add, .actions-block { display: none !important; }
+            .radio-tile-group, .slider-container input, .lock-container, .checkbox-group, .outgoings-list, .btn-add, .actions-block, .mode-helper { display: none !important; }
             .slider-container { display: block !important; }
             input[type="text"], input[type="number"], select { background: transparent !important; border: none !important; padding: 0 !important; font-size: 11px !important; color: #000000 !important; text-align: right; width: auto !important; }
             .input-with-prefix { display: flex; justify-content: flex-end; align-items: center; gap: 2px; border: none !important; background: transparent !important; }
@@ -632,10 +651,27 @@
         <div id="alertAnchor"></div>
 
         <div class="workspace-grid">
-            
+
             <section class="panel">
                 <h2 class="panel-title">Parameters</h2>
-                
+
+                <div class="form-group">
+                    <label>Income Type</label>
+                    <div class="radio-tile-group two-options">
+                        <label>
+                            <input type="radio" name="incomeMode" value="gross" checked onchange="handleIncomeModeChange()">
+                            <span class="radio-tile-label">Gross Income</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="incomeMode" value="net" onchange="handleIncomeModeChange()">
+                            <span class="radio-tile-label">Net Income</span>
+                        </label>
+                    </div>
+                    <div class="mode-helper" id="incomeModeHelper">
+                        Gross mode calculates tax, National Insurance, pension and student loan deductions. Net mode uses your take-home income directly.
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label>Input Entry Track</label>
                     <div class="radio-tile-group">
@@ -655,14 +691,14 @@
                 </div>
 
                 <div class="form-group">
-                    <label id="salaryLabel">Gross Annual Salary</label>
+                    <label id="incomeInputLabel">Gross Annual Salary</label>
                     <div class="input-with-prefix">
                         <span>£</span>
-                        <input type="number" id="grossInput" value="60000" min="0" step="100" oninput="handleSalaryInput()">
+                        <input type="number" id="incomeInput" value="60000" min="0" step="100" oninput="handleIncomeInput()">
                     </div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group gross-only">
                     <label>Workplace Pension Allocation</label>
                     <div class="slider-container">
                         <input type="range" id="pensionInput" min="0" max="30" value="5" step="1" oninput="updatePensionSliderLabel(); calculateState();">
@@ -670,7 +706,7 @@
                     </div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group gross-only">
                     <label>Tax Code</label>
                     <input type="text" id="taxCodeInput" value="1257L" oninput="calculateState()">
                     <div class="lock-container">
@@ -679,7 +715,7 @@
                     </div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group gross-only">
                     <label>Student Loan Schemes</label>
                     <div class="checkbox-group">
                         <label class="checkbox-item">
@@ -706,9 +742,9 @@
 
             <section class="panel">
                 <h2 class="panel-title">Statement Overview <span id="statementPeriodLabel" style="font-size:0.9rem; font-family:var(--font-ui); color:var(--gold-soft);">Annual</span></h2>
-                
+
                 <div class="ledger">
-                    <details class="ledger-group" open>
+                    <details class="ledger-group gross-only" id="grossRevenueLedger" open>
                         <summary class="ledger-summary">
                             <div class="summary-left"><span class="summary-arrow"></span> 1. Gross Revenue</div>
                             <span class="summary-total-val" id="lblGross" style="color: var(--navy-deep);">£0.00</span>
@@ -721,7 +757,7 @@
                         </div>
                     </details>
 
-                    <details class="ledger-group" open>
+                    <details class="ledger-group gross-only" id="deductionsLedger" open>
                         <summary class="ledger-summary">
                             <div class="summary-left"><span class="summary-arrow"></span> 2. Total Deductions</div>
                             <span class="summary-total-val" id="lblTotalDeductions" style="color:#C53030;">£0.00</span>
@@ -747,20 +783,20 @@
                     </details>
 
                     <div class="ledger-row net-income-row">
-                        <span>3. Take Home</span>
+                        <span id="takeHomeLabel">3. Take Home</span>
                         <span class="ledger-val" id="lblNetTakeHome">£0.00</span>
                     </div>
 
                     <details class="ledger-group" open>
                         <summary class="ledger-summary">
-                            <div class="summary-left"><span class="summary-arrow"></span> 4. Committed Outgoings</div>
+                            <div class="summary-left"><span class="summary-arrow"></span> <span id="outgoingsSectionLabel">4. Committed Outgoings</span></div>
                             <span class="summary-total-val" id="lblOutgoings" style="color:var(--gold-soft);">£0.00</span>
                         </summary>
                         <div class="ledger-content" id="lblOutgoingsBreakdownContainer"></div>
                     </details>
 
                     <div class="ledger-row total-row">
-                        <span>5. Retained Free Capital</span>
+                        <span id="freeCapitalLabel">5. Retained Free Capital</span>
                         <span class="ledger-val" id="lblNetFree">£0.00</span>
                     </div>
                 </div>
@@ -782,9 +818,15 @@
     </div>
 
     <script>
-        // Track baseline master annual gross separately to safely perform synchronized track conversions
-        let masterAnnualGross = 60000;
+        // The input track controls how values are entered/displayed: annual, monthly or weekly.
         let currentActiveInputTrack = 'annual';
+
+        // The income mode controls whether the main input is gross income or net take-home income.
+        let currentIncomeMode = 'gross';
+
+        // Separate annual masters prevent the gross and net values from overwriting each other when toggling modes.
+        let masterAnnualGross = 60000;
+        let masterAnnualNet = 0;
 
         let globalState = {
             annual: { gross: 0, pension: 0, incomeTax: 0, ni: 0, studentLoan: 0, outgoings: 0, netTakeHome: 0, netFree: 0, itemizedOutgoings: [] }
@@ -799,6 +841,13 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             seedInitialOutgoings();
+            updatePensionSliderLabel();
+
+            // Calculate the default net value from the default gross value so the Net toggle starts sensibly.
+            masterAnnualNet = calculateGrossModeAnnuals(masterAnnualGross).annualTakeHome;
+
+            syncIncomeInputFromMaster();
+            applyIncomeModeVisibility();
             calculateState();
         });
 
@@ -809,7 +858,7 @@
                 { name: 'Utilities', amount: 200, period: 'monthly' },
                 { name: 'Groceries & Living', amount: 400, period: 'monthly' }
             ];
-            
+
             const container = document.getElementById('outgoingsContainer');
             defaults.forEach(item => {
                 container.appendChild(createOutgoingRowElement(item.name, item.amount, item.period));
@@ -819,9 +868,9 @@
         function createOutgoingRowElement(name = '', amount = 0, period = 'monthly') {
             const div = document.createElement('div');
             div.className = 'outgoing-row';
-            
+
             div.innerHTML = `
-                <input type="text" class="out-name" value="${name}" placeholder="Outgoing Label" oninput="calculateState()">
+                <input type="text" class="out-name" value="${escapeHtml(name)}" placeholder="Outgoing Label" oninput="calculateState()">
                 <div class="input-with-prefix">
                     <span>£</span>
                     <input type="number" class="out-amount" value="${amount}" min="0" step="10" oninput="calculateState()">
@@ -847,49 +896,86 @@
             calculateState();
         }
 
-        function handleTrackChange() {
-            const currentInputVal = parseFloat(document.getElementById('grossInput').value) || 0;
-            
-            // Normalize old track down to master baseline annual gross
-            if (currentActiveInputTrack === 'monthly') {
-                masterAnnualGross = currentInputVal * 12;
-            } else if (currentActiveInputTrack === 'weekly') {
-                masterAnnualGross = currentInputVal * 52;
-            } else {
-                masterAnnualGross = currentInputVal;
+        function handleIncomeModeChange() {
+            commitCurrentIncomeInputToMaster();
+
+            currentIncomeMode = document.querySelector('input[name="incomeMode"]:checked').value;
+
+            // When switching to net for the first time, use the latest gross-mode take-home as a helpful default.
+            if (currentIncomeMode === 'net' && masterAnnualNet <= 0) {
+                masterAnnualNet = calculateGrossModeAnnuals(masterAnnualGross).annualTakeHome;
             }
 
-            // Identify newly active timeline tracking track
-            const radioSelected = document.querySelector('input[name="inputTrack"]:checked').value;
-            currentActiveInputTrack = radioSelected;
-
-            const labelEl = document.getElementById('salaryLabel');
-            const inputEl = document.getElementById('grossInput');
-
-            if (radioSelected === 'monthly') {
-                labelEl.innerText = "Gross Monthly Salary";
-                inputEl.value = Math.round(masterAnnualGross / 12);
-            } else if (radioSelected === 'weekly') {
-                labelEl.innerText = "Gross Weekly Salary";
-                inputEl.value = Math.round(masterAnnualGross / 52);
-            } else {
-                labelEl.innerText = "Gross Annual Salary";
-                inputEl.value = Math.round(masterAnnualGross);
-            }
-
+            syncIncomeInputFromMaster();
+            applyIncomeModeVisibility();
             calculateState();
         }
 
-        function handleSalaryInput() {
-            const currentInputVal = parseFloat(document.getElementById('grossInput').value) || 0;
-            if (currentActiveInputTrack === 'monthly') {
-                masterAnnualGross = currentInputVal * 12;
-            } else if (currentActiveInputTrack === 'weekly') {
-                masterAnnualGross = currentInputVal * 52;
-            } else {
-                masterAnnualGross = currentInputVal;
-            }
+        function handleTrackChange() {
+            commitCurrentIncomeInputToMaster();
+
+            currentActiveInputTrack = document.querySelector('input[name="inputTrack"]:checked').value;
+
+            syncIncomeInputFromMaster();
             calculateState();
+        }
+
+        function handleIncomeInput() {
+            commitCurrentIncomeInputToMaster();
+            calculateState();
+        }
+
+        function commitCurrentIncomeInputToMaster() {
+            const currentInputVal = parseFloat(document.getElementById('incomeInput').value) || 0;
+            const annualizedValue = annualizeValueByTrack(currentInputVal);
+
+            if (currentIncomeMode === 'net') {
+                masterAnnualNet = annualizedValue;
+            } else {
+                masterAnnualGross = annualizedValue;
+                masterAnnualNet = calculateGrossModeAnnuals(masterAnnualGross).annualTakeHome;
+            }
+        }
+
+        function syncIncomeInputFromMaster() {
+            const inputEl = document.getElementById('incomeInput');
+            const labelEl = document.getElementById('incomeInputLabel');
+
+            const annualValue = currentIncomeMode === 'net' ? masterAnnualNet : masterAnnualGross;
+            inputEl.value = Math.round(scaleAnnualValueToTrack(annualValue));
+
+            const modeLabel = currentIncomeMode === 'net' ? 'Net' : 'Gross';
+            const trackLabel = currentActiveInputTrack.charAt(0).toUpperCase() + currentActiveInputTrack.slice(1);
+
+            labelEl.innerText = `${modeLabel} ${trackLabel} Income`;
+        }
+
+        function annualizeValueByTrack(value) {
+            if (currentActiveInputTrack === 'monthly') return value * 12;
+            if (currentActiveInputTrack === 'weekly') return value * 52;
+            return value;
+        }
+
+        function scaleAnnualValueToTrack(value) {
+            if (currentActiveInputTrack === 'monthly') return value / 12;
+            if (currentActiveInputTrack === 'weekly') return value / 52;
+            return value;
+        }
+
+        function applyIncomeModeVisibility() {
+            const isNetMode = currentIncomeMode === 'net';
+
+            document.querySelectorAll('.gross-only').forEach(el => {
+                el.classList.toggle('hidden', isNetMode);
+            });
+
+            document.getElementById('incomeModeHelper').innerText = isNetMode
+                ? 'Net mode uses your take-home income directly and hides gross-income deduction fields.'
+                : 'Gross mode calculates tax, National Insurance, pension and student loan deductions.';
+
+            document.getElementById('takeHomeLabel').innerText = isNetMode ? '1. Net Income' : '3. Take Home';
+            document.getElementById('outgoingsSectionLabel').innerText = isNetMode ? '2. Committed Outgoings' : '4. Committed Outgoings';
+            document.getElementById('freeCapitalLabel').innerText = isNetMode ? '3. Retained Free Capital' : '5. Retained Free Capital';
         }
 
         function updatePensionSliderLabel() {
@@ -920,23 +1006,107 @@
             return '£' + amount.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
         /* --- COMPUTATION ENGINE --- */
         function calculateState() {
-            // Force compliance if locked checked
-            if (document.getElementById('lockTaxCode').checked) {
+            let annualGross = 0;
+            let annualPension = 0;
+            let annualTax = 0;
+            let annualNI = 0;
+            let annualStudentLoan = 0;
+            let annualDeductions = 0;
+            let annualTakeHome = 0;
+
+            if (currentIncomeMode === 'gross') {
+                const grossModeAnnuals = calculateGrossModeAnnuals(masterAnnualGross);
+
+                annualGross = grossModeAnnuals.annualGross;
+                annualPension = grossModeAnnuals.annualPension;
+                annualTax = grossModeAnnuals.annualTax;
+                annualNI = grossModeAnnuals.annualNI;
+                annualStudentLoan = grossModeAnnuals.annualStudentLoan;
+                annualDeductions = grossModeAnnuals.annualDeductions;
+                annualTakeHome = grossModeAnnuals.annualTakeHome;
+
+                // Keep the net master aligned while the user is actively editing gross values.
+                masterAnnualNet = annualTakeHome;
+            } else {
+                annualTakeHome = masterAnnualNet;
+            }
+
+            // Sum itemized outgoings scaled to unified tracking paths.
+            let annualOutgoingsTotal = 0;
+            const itemizedList = [];
+            const rows = document.querySelectorAll('.outgoing-row');
+
+            rows.forEach(row => {
+                const nameStr = row.querySelector('.out-name').value || 'Unnamed Outgoing';
+                const amtNum = parseFloat(row.querySelector('.out-amount').value) || 0;
+                const periodStr = row.querySelector('.out-period').value;
+
+                let scaledAnnual = 0;
+                if (periodStr === 'monthly') scaledAnnual = amtNum * 12;
+                else if (periodStr === 'weekly') scaledAnnual = amtNum * 52;
+                else scaledAnnual = amtNum;
+
+                annualOutgoingsTotal += scaledAnnual;
+                itemizedList.push({ name: nameStr, annualAmount: scaledAnnual });
+            });
+
+            const annualFreeCapital = annualTakeHome - annualOutgoingsTotal;
+
+            let scaleFactor = 1;
+            let displayLabel = "Annual";
+
+            if (currentActiveInputTrack === 'monthly') {
+                scaleFactor = 12;
+                displayLabel = "Monthly";
+            } else if (currentActiveInputTrack === 'weekly') {
+                scaleFactor = 52;
+                displayLabel = "Weekly";
+            }
+
+            const activeState = {
+                incomeMode: currentIncomeMode,
+                gross: annualGross / scaleFactor,
+                pension: annualPension / scaleFactor,
+                incomeTax: annualTax / scaleFactor,
+                ni: annualNI / scaleFactor,
+                studentLoan: annualStudentLoan / scaleFactor,
+                deductions: annualDeductions / scaleFactor,
+                netTakeHome: annualTakeHome / scaleFactor,
+                outgoings: annualOutgoingsTotal / scaleFactor,
+                netFree: annualFreeCapital / scaleFactor,
+                itemizedOutgoings: itemizedList.map(item => ({
+                    name: item.name,
+                    amount: item.annualAmount / scaleFactor
+                }))
+            };
+
+            globalState.annual = activeState;
+            updateUIDisplay(activeState, displayLabel);
+        }
+
+        function calculateGrossModeAnnuals(annualGrossInput) {
+            if (document.getElementById('lockTaxCode')?.checked) {
                 document.getElementById('taxCodeInput').value = "1257L";
             }
 
-            // Always calculate standard UK statutory allowances from annual master baseline perspective
-            const annualGross = masterAnnualGross;
-            const pensionPercent = parseFloat(document.getElementById('pensionInput').value) || 0;
+            const annualGross = Math.max(0, annualGrossInput);
+            const pensionPercent = parseFloat(document.getElementById('pensionInput')?.value) || 0;
             const annualPension = annualGross * (pensionPercent / 100);
-            
-            // Taxable income baseline computation
-            const standardAllowance = 12570;
-            let taxableIncome = Math.max(0, annualGross - annualPension - standardAllowance);
-            
+
             // Simple UK Tax Brackets 2026/2027 Projections Simulation
+            const standardAllowance = getPersonalAllowanceFromTaxCode();
+            let taxableIncome = Math.max(0, annualGross - annualPension - standardAllowance);
+
             let annualTax = 0;
             if (taxableIncome > 0) {
                 if (taxableIncome <= 37700) {
@@ -960,113 +1130,90 @@
 
             // Student Loan Simulation Core Rules
             let annualStudentLoan = 0;
-            if (document.getElementById('slPlan1').checked && annualGross > 24990) {
+            if (document.getElementById('slPlan1')?.checked && annualGross > 24990) {
                 annualStudentLoan += (annualGross - 24990) * 0.09;
-            } else if (document.getElementById('slPlan2').checked && annualGross > 27295) {
+            } else if (document.getElementById('slPlan2')?.checked && annualGross > 27295) {
                 annualStudentLoan += (annualGross - 27295) * 0.09;
-            } else if (document.getElementById('slPlan4').checked && annualGross > 31395) {
+            } else if (document.getElementById('slPlan4')?.checked && annualGross > 31395) {
                 annualStudentLoan += (annualGross - 31395) * 0.09;
             }
-            if (document.getElementById('slPostgrad').checked && annualGross > 21000) {
+            if (document.getElementById('slPostgrad')?.checked && annualGross > 21000) {
                 annualStudentLoan += (annualGross - 21000) * 0.06;
             }
 
-            // Sum itemized outgoings scaled to unified tracking paths
-            let annualOutgoingsTotal = 0;
-            const itemizedList = [];
-            const rows = document.querySelectorAll('.outgoing-row');
-            
-            rows.forEach(row => {
-                const nameStr = row.querySelector('.out-name').value || 'Unnamed Outgoing';
-                const amtNum = parseFloat(row.querySelector('.out-amount').value) || 0;
-                const periodStr = row.querySelector('.out-period').value;
-                
-                let scaledAnnual = 0;
-                if (periodStr === 'monthly') scaledAnnual = amtNum * 12;
-                else if (periodStr === 'weekly') scaledAnnual = amtNum * 52;
-                else scaledAnnual = amtNum;
-
-                annualOutgoingsTotal += scaledAnnual;
-                itemizedList.push({ name: nameStr, annualAmount: scaledAnnual });
-            });
-
-            // Calculate derived annual margins
             const annualDeductions = annualPension + annualTax + annualNI + annualStudentLoan;
             const annualTakeHome = Math.max(0, annualGross - annualDeductions);
-            const annualFreeCapital = annualTakeHome - annualOutgoingsTotal;
 
-            // Set state variables scale configuration matching chosen timeline track selector
-            let scaleFactor = 1;
-            let displayLabel = "Annual";
-
-            if (currentActiveInputTrack === 'monthly') {
-                scaleFactor = 12;
-                displayLabel = "Monthly";
-            } else if (currentActiveInputTrack === 'weekly') {
-                scaleFactor = 52;
-                displayLabel = "Weekly";
-            }
-
-            const activeState = {
-                gross: annualGross / scaleFactor,
-                pension: annualPension / scaleFactor,
-                incomeTax: annualTax / scaleFactor,
-                ni: annualNI / scaleFactor,
-                studentLoan: annualStudentLoan / scaleFactor,
-                deductions: annualDeductions / scaleFactor,
-                netTakeHome: annualTakeHome / scaleFactor,
-                outgoings: annualOutgoingsTotal / scaleFactor,
-                netFree: annualFreeCapital / scaleFactor,
-                itemizedOutgoings: itemizedList.map(item => ({
-                    name: item.name,
-                    amount: item.annualAmount / scaleFactor
-                }))
+            return {
+                annualGross,
+                annualPension,
+                annualTax,
+                annualNI,
+                annualStudentLoan,
+                annualDeductions,
+                annualTakeHome
             };
+        }
 
-            updateUIDisplay(activeState, displayLabel);
+        function getPersonalAllowanceFromTaxCode() {
+            const locked = document.getElementById('lockTaxCode')?.checked;
+            const rawTaxCode = (document.getElementById('taxCodeInput')?.value || '1257L').trim().toUpperCase();
+
+            if (locked || rawTaxCode === '1257L') return 12570;
+
+            // Basic support for common numeric UK tax codes, e.g. 1257L = 12,570 allowance.
+            const numericPart = rawTaxCode.match(/\d+/);
+            if (!numericPart) return 12570;
+
+            return parseInt(numericPart[0], 10) * 10;
         }
 
         /* --- UI RENDER SYSTEM --- */
         function updateUIDisplay(state, labelText) {
             document.getElementById('statementPeriodLabel').innerText = labelText;
-            
-            // Map text text labels
+
             document.getElementById('lblGross').innerText = formatCurrency(state.gross);
             document.getElementById('lblGrossSub').innerText = formatCurrency(state.gross);
-            
+
             document.getElementById('lblTotalDeductions').innerText = formatCurrency(state.deductions);
             document.getElementById('lblPension').innerText = formatCurrency(state.pension);
             document.getElementById('lblIncomeTax').innerText = formatCurrency(state.incomeTax);
             document.getElementById('lblNI').innerText = formatCurrency(state.ni);
             document.getElementById('lblStudentLoan').innerText = formatCurrency(state.studentLoan);
-            
+
             document.getElementById('lblNetTakeHome').innerText = formatCurrency(state.netTakeHome);
             document.getElementById('lblOutgoings').innerText = formatCurrency(state.outgoings);
             document.getElementById('lblNetFree').innerText = formatCurrency(state.netFree);
 
-            // Toggle student loan visualization block wrapper
             if (state.studentLoan === 0) {
                 document.getElementById('rowStudentLoan').style.display = 'none';
             } else {
                 document.getElementById('rowStudentLoan').style.display = 'flex';
             }
 
-            // Output itemized outgoings details structures
             const breakdownContainer = document.getElementById('lblOutgoingsBreakdownContainer');
             breakdownContainer.innerHTML = '';
-            
+
             if (state.itemizedOutgoings.length === 0) {
                 breakdownContainer.innerHTML = `<div class="ledger-row"><span>No outgoings committed</span><span>£0.00</span></div>`;
             } else {
                 state.itemizedOutgoings.forEach(item => {
                     const r = document.createElement('div');
                     r.className = 'ledger-row highlighted-outgoing';
-                    r.innerHTML = `<span>• ${item.name}</span><span class="ledger-val">${formatCurrency(item.amount)}</span>`;
+
+                    const nameSpan = document.createElement('span');
+                    nameSpan.textContent = `• ${item.name}`;
+
+                    const valueSpan = document.createElement('span');
+                    valueSpan.className = 'ledger-val';
+                    valueSpan.textContent = formatCurrency(item.amount);
+
+                    r.appendChild(nameSpan);
+                    r.appendChild(valueSpan);
                     breakdownContainer.appendChild(r);
                 });
             }
 
-            // Inject structural layout structural changes based on deficit warnings thresholds
             const alertAnchor = document.getElementById('alertAnchor');
             if (state.netFree < 0) {
                 alertAnchor.innerHTML = `<div class="deficit-alert-banner">Warning: Committed Outgoings exceed Take Home allocations by ${formatCurrency(Math.abs(state.netFree))}</div>`;
@@ -1074,7 +1221,6 @@
                 alertAnchor.innerHTML = '';
             }
 
-            // Redraw dynamic donut graph assets cleanly
             renderDonutChart(state);
         }
 
@@ -1082,14 +1228,12 @@
         function renderDonutChart(state) {
             const svg = document.getElementById('budgetDonutSvg');
             const legendContainer = document.getElementById('budgetChartLegend');
-            
-            // Clear current layout nodes safely
+
             svg.innerHTML = '';
             legendContainer.innerHTML = '';
 
             const takeHomeMax = state.netTakeHome;
 
-            // Edge condition handling: completely blank revenue configurations
             if (takeHomeMax <= 0) {
                 svg.innerHTML = `<circle cx="100" cy="100" r="70" fill="none" stroke="${colorOverdraftLimit}" stroke-width="24" />
                                  <text x="100" y="105" text-anchor="middle" font-family="Inter" font-size="12" font-weight="600" fill="#2D3748">No Income</text>`;
@@ -1097,11 +1241,9 @@
                 return;
             }
 
-            // Geometry metrics configuration calculations 
             const radius = 70;
-            const circumference = 2 * Math.PI * radius; // Approx 439.82
+            const circumference = 2 * Math.PI * radius;
 
-            // Deficit Threshold State Handling
             if (state.netFree < 0) {
                 svg.innerHTML = `
                     <circle class="donut-segment" cx="100" cy="100" r="${radius}" 
@@ -1120,15 +1262,12 @@
                 return;
             }
 
-            // Normal Balance Composition State Mapping
             let currentOffset = 0;
             let colorIndex = 0;
 
-            // 1. Process Itemized Outgoings Components
             state.itemizedOutgoings.forEach(outgoing => {
                 if (outgoing.amount <= 0) return;
 
-                // Determine precise spatial scaling properties matching exact current Take Home values
                 const componentRatio = outgoing.amount / takeHomeMax;
                 const segmentStrokeLength = circumference * componentRatio;
                 const activeColor = designColors[colorIndex % designColors.length];
@@ -1147,15 +1286,13 @@
 
                 currentOffset += segmentStrokeLength;
 
-                // Append Legend Node Elements safely
                 const legendItem = document.createElement('div');
                 legendItem.className = 'legend-item';
                 legendItem.title = outgoing.name;
-                legendItem.innerHTML = `<span class="legend-dot" style="background:${activeColor}"></span><span>${outgoing.name}</span>`;
+                legendItem.innerHTML = `<span class="legend-dot" style="background:${activeColor}"></span><span>${escapeHtml(outgoing.name)}</span>`;
                 legendContainer.appendChild(legendItem);
             });
 
-            // 2. Map Dynamic Free Capital Residual Filling Segment
             if (state.netFree > 0) {
                 const freeRatio = state.netFree / takeHomeMax;
                 const freeStrokeLength = circumference * freeRatio;
@@ -1177,7 +1314,6 @@
                 legendContainer.appendChild(freeLegendItem);
             }
 
-            // 3. Inject Central Text Summary Labels
             const centralText = document.createElementNS("http://www.w3.org/2000/svg", "text");
             centralText.setAttribute("x", "100");
             centralText.setAttribute("y", "105");
